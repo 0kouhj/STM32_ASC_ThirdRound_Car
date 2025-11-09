@@ -18,7 +18,7 @@
           <Vendor>STMicroelectronics</Vendor>
           <PackID>Keil.STM32F1xx_DFP.2.3.0</PackID>
           <PackURL>http://www.keil.com/pack/</PackURL>
-          <Cpu>IRAM(0x20000000,0x00005000) IROM(0x08000000,0x00010000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
+          <Cpu>IRAM(0x20000000,0x5000) IROM(0x08000000,0x10000) CPUTYPE("Cortex-M3") CLOCK(12000000) ELITTLE</Cpu>
           <FlashUtilSpec></FlashUtilSpec>
           <StartupFile></StartupFile>
           <FlashDriverDll>UL2CM3(-S0 -C0 -P0 -FD20000000 -FC1000 -FN1 -FF0STM32F10x_128 -FS08000000 -FL020000 -FP0($$Device:STM32F103C8$Flash\STM32F10x_128.FLM))</FlashDriverDll>
@@ -49,7 +49,7 @@
             <InvalidFlash>1</InvalidFlash>
           </TargetStatus>
           <OutputDirectory>.\Objects\</OutputDirectory>
-          <OutputName>1</OutputName>
+          <OutputName>Project</OutputName>
           <CreateExecutable>1</CreateExecutable>
           <CreateLib>0</CreateLib>
           <CreateHexFile>0</CreateHexFile>
@@ -134,11 +134,11 @@
             <RunIndependent>0</RunIndependent>
             <UpdateFlashBeforeDebugging>1</UpdateFlashBeforeDebugging>
             <Capability>1</Capability>
-            <DriverSelection>4096</DriverSelection>
+            <DriverSelection>-1</DriverSelection>
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3>"" ()</Flash3>
+          <Flash3></Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -325,7 +325,7 @@
             <uThumb>0</uThumb>
             <uSurpInc>0</uSurpInc>
             <uC99>1</uC99>
-            <uGnu>1</uGnu>
+            <uGnu>0</uGnu>
             <useXO>0</useXO>
             <v6Lang>1</v6Lang>
             <v6LangP>1</v6LangP>
@@ -338,7 +338,7 @@
               <MiscControls>--no-multibyte-chars</MiscControls>
               <Define>USE_STDPERIPH_DRIVER</Define>
               <Undefine></Undefine>
-              <IncludePath>.\Start;.\User;.\Library;.\System;.\Hardware;.\Software</IncludePath>
+              <IncludePath>.\Start;.\User;.\Library;.\Hardware;.\Software;.\System;.\Data</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -398,14 +398,14 @@
               <FilePath>.\Start\core_cm3.h</FilePath>
             </File>
             <File>
-              <FileName>system_stm32f10x.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Start\system_stm32f10x.c</FilePath>
-            </File>
-            <File>
               <FileName>stm32f10x.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Start\stm32f10x.h</FilePath>
+            </File>
+            <File>
+              <FileName>system_stm32f10x.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Start\system_stm32f10x.c</FilePath>
             </File>
             <File>
               <FileName>system_stm32f10x.h</FileName>
@@ -653,20 +653,30 @@
           <GroupName>System</GroupName>
           <Files>
             <File>
-              <FileName>Timer.c</FileName>
+              <FileName>Delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\System\Timer.c</FilePath>
+              <FilePath>.\System\Delay.c</FilePath>
             </File>
             <File>
-              <FileName>Timer.h</FileName>
+              <FileName>Delay.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\System\Timer.h</FilePath>
+              <FilePath>.\System\Delay.h</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>Hardware</GroupName>
           <Files>
+            <File>
+              <FileName>Encoder.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\Encoder.c</FilePath>
+            </File>
+            <File>
+              <FileName>Encoder.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\Encoder.h</FilePath>
+            </File>
             <File>
               <FileName>KEY.c</FileName>
               <FileType>1</FileType>
@@ -678,16 +688,6 @@
               <FilePath>.\Hardware\KEY.h</FilePath>
             </File>
             <File>
-              <FileName>PWM.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\PWM.c</FilePath>
-            </File>
-            <File>
-              <FileName>PWM.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\PWM.h</FilePath>
-            </File>
-            <File>
               <FileName>Motor.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Hardware\Motor.c</FilePath>
@@ -696,16 +696,6 @@
               <FileName>Motor.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Hardware\Motor.h</FilePath>
-            </File>
-            <File>
-              <FileName>Encoder.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Encoder.c</FilePath>
-            </File>
-            <File>
-              <FileName>Encoder.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Encoder.h</FilePath>
             </File>
             <File>
               <FileName>OLED.c</FileName>
@@ -726,6 +716,86 @@
               <FileName>OLED_Data.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Hardware\OLED_Data.h</FilePath>
+            </File>
+            <File>
+              <FileName>PWM.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\PWM.c</FilePath>
+            </File>
+            <File>
+              <FileName>PWM.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\PWM.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Software</GroupName>
+          <Files>
+            <File>
+              <FileName>menu.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Software\menu.c</FilePath>
+            </File>
+            <File>
+              <FileName>menu.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Software\menu.h</FilePath>
+            </File>
+            <File>
+              <FileName>Motor_Control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Software\Motor_Control.c</FilePath>
+            </File>
+            <File>
+              <FileName>Motor_Control.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Software\Motor_Control.h</FilePath>
+            </File>
+            <File>
+              <FileName>Serial.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Software\Serial.c</FilePath>
+            </File>
+            <File>
+              <FileName>Serial.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Software\Serial.h</FilePath>
+            </File>
+            <File>
+              <FileName>Communication.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Software\Communication.c</FilePath>
+            </File>
+            <File>
+              <FileName>Communication.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Software\Communication.h</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>Data</GroupName>
+          <Files>
+            <File>
+              <FileName>Motor_Data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Data\Motor_Data.h</FilePath>
+            </File>
+            <File>
+              <FileName>Sensor_Data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Data\Sensor_Data.h</FilePath>
+            </File>
+            <File>
+              <FileName>System_Data.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Data\System_Data.h</FilePath>
+            </File>
+            <File>
+              <FileName>System_Data.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Data\System_Data.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -751,51 +821,6 @@
               <FileName>stm32f10x_it.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\User\stm32f10x_it.h</FilePath>
-            </File>
-          </Files>
-        </Group>
-        <Group>
-          <GroupName>Software</GroupName>
-          <Files>
-            <File>
-              <FileName>menu.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Software\menu.c</FilePath>
-            </File>
-            <File>
-              <FileName>menu.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Software\menu.h</FilePath>
-            </File>
-            <File>
-              <FileName>Serial.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Software\Serial.c</FilePath>
-            </File>
-            <File>
-              <FileName>Serial.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Software\Serial.h</FilePath>
-            </File>
-            <File>
-              <FileName>Motor_Control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Software\Motor_Control.c</FilePath>
-            </File>
-            <File>
-              <FileName>Motor_Control.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Software\Motor_Control.h</FilePath>
-            </File>
-            <File>
-              <FileName>Vofa.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Software\Vofa.c</FilePath>
-            </File>
-            <File>
-              <FileName>Vofa.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Software\Vofa.h</FilePath>
             </File>
           </Files>
         </Group>

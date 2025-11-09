@@ -1,65 +1,149 @@
-#include "stm32f10x.h"                  // Device header
+#include "stm32f10x.h"
+#include "serial.h"
+#include "Motor_Control.h"
+#include "Motor_Data.h"
+#include "System_Data.h"
+#include "Sensor_Data.h"
+#include "Encoder.h"
+#include "KEY.h"
+// 在PWM.c文件开头添加外部声明
+extern volatile uint32_t millis_count;
+
+
+char Motor_Str[64];
+/**
+  * 函    数：左电机PWM初始化 (PA0, TIM2_CH1)
+  */
+/**
+  * 函    数：左电机PWM初始化 (PA0, TIM2_CH1)
+  */
+void PWM_LeftMotor_Init(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
+    TIM_OCInitTypeDef TIM_OCInitStructure;
+    NVIC_InitTypeDef NVIC_InitStructure;
+    
+    /* 开启时钟 */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+    
+    /* 配置GPIO PA0为复用推挽输出 */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    
+    /* 配置时基单元 */
+    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    // 在PWM初始化中修改
+	TIM_TimeBaseInitStructure.TIM_Period = 100 - 1;        // 回到1kHz
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 36 - 1;       // 72分频
+    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStructure);
+    
+    /* 配置输出比较通道1 */
+    TIM_OCStructInit(&TIM_OCInitStructure);
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = 0;  // 初始占空比0%
+    TIM_OC1Init(TIM2, &TIM_OCInitStructure);
+    
+    /* 配置TIM2更新中断 */
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);  // 使能更新中断
+    
+    /* 配置NVIC */
+    NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure);
+    
+    TIM_Cmd(TIM2, ENABLE);
+}
 
 /**
-  * 函    数：PWM初始化
-  * 参    数：无
-  * 返 回 值：无
+  * 函    数：右电机PWM初始化 (PA6, TIM3_CH1)
   */
-void PWM_Init(void)
+void PWM_RightMotor_Init(void)
 {
-	/*开启时钟*/
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);			//开启TIM2的时钟
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);			//开启GPIOA的时钟
-	
-	/*GPIO初始化*/
-	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2|GPIO_Pin_3;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOA, &GPIO_InitStructure);							
-	
-	/*配置时钟源*/
-	TIM_InternalClockConfig(TIM2);		//选择TIM2为内部时钟，若不调用此函数，TIM默认也为内部时钟
-	
-	/*时基单元初始化*/
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;				//定义结构体变量
-	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;     //时钟分频，选择不分频，此参数用于配置滤波器时钟，不影响时基单元功能
-	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up; //计数器模式，选择向上计数
-	TIM_TimeBaseInitStructure.TIM_Period = 100 - 1;                 //计数周期，即ARR的值
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 36 - 1;               //预分频器，即PSC的值
-	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;            //重复计数器，高级定时器才会用到
-	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStructure);             //将结构体变量交给TIM_TimeBaseInit，配置TIM2的时基单元
-	
-	/*输出比较初始化*/ 
-	TIM_OCInitTypeDef TIM_OCInitStructure;							//定义结构体变量
-	TIM_OCStructInit(&TIM_OCInitStructure);                         //结构体初始化，若结构体没有完整赋值
-	                                                                //则最好执行此函数，给结构体所有成员都赋一个默认值
-	                                                                //避免结构体初值不确定的问题
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;               //输出比较模式，选择PWM模式1
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;       //输出极性，选择为高，若选择极性为低，则输出高低电平取反
-	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;   //输出使能
-	TIM_OCInitStructure.TIM_Pulse = 0;								//初始的CCR值
-	TIM_OC3Init(TIM2, &TIM_OCInitStructure);                        //将结构体变量交给TIM_OC3Init，配置TIM2的输出比较通道3
-	// 初始化 TIM2_CH4 (A3) 给电机2使用
-	TIM_OC4Init(TIM2, &TIM_OCInitStructure);   // 将同样的配置用于通道4
-
-	/*TIM使能*/
-	TIM_Cmd(TIM2, ENABLE);			//使能TIM2，定时器开始运行
+    GPIO_InitTypeDef GPIO_InitStructure;
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
+    TIM_OCInitTypeDef TIM_OCInitStructure;
+    
+    /* 开启时钟 */
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_AFIO, ENABLE);
+    
+    /* 配置GPIO PA6为复用推挽输出 */
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_6;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    
+    /* 配置时基单元 */
+    TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
+    TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    // 在PWM初始化中修改
+	TIM_TimeBaseInitStructure.TIM_Period = 100 - 1;        // 回到1kHz
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 36 - 1;       // 72分频
+    TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM3, &TIM_TimeBaseInitStructure);
+    
+    /* 配置输出比较通道1 */
+    TIM_OCStructInit(&TIM_OCInitStructure);
+    TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+    TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+    TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+    TIM_OCInitStructure.TIM_Pulse = 0;  // 初始占空比0%
+    TIM_OC1Init(TIM3, &TIM_OCInitStructure);
+    
+    TIM_Cmd(TIM3, ENABLE);
 }
 
 /**
-  * 函    数：PWM设置CCR
-  * 参    数：Compare 要写入的CCR的值，范围：0~100
-  * 返 回 值：无
-  * 注意事项：CCR和ARR共同决定占空比，此函数仅设置CCR的值，并不直接是占空比
-  *           占空比Duty = CCR / (ARR + 1)
+  * 函    数：设置左电机PWM占空比
   */
-void PWM_SetCompare3(uint16_t Compare)
+void PWM_SetLeftMotorCompare(uint16_t Compare)
 {
-	TIM_SetCompare3(TIM2, Compare);		//设置CCR3的值
-}
-void PWM_SetCompare4(uint16_t Compare)
-{
-    TIM_SetCompare4(TIM2, Compare);   // 写入 TIM2 CCR4
+    if (Compare > 1000) Compare = 1000;
+    TIM_SetCompare1(TIM2, Compare);
 }
 
+/**
+  * 函    数：设置右电机PWM占空比
+  */
+void PWM_SetRightMotorCompare(uint16_t Compare)
+{
+    if (Compare > 1000) Compare = 1000;
+    TIM_SetCompare1(TIM3, Compare);
+}
+void Data_Update(void)
+{
+    // 更新电池状态（修正判断逻辑）
+    if (system_status_packet.battery_voltage < 10.0f)  // 修正：通常低电量在7V左右
+    {
+        system_status_packet.low_battery_warning = 1;
+        system_status_packet.battery_level = (uint8_t)((system_status_packet.battery_voltage / 12.6f) * 100);
+    }
+    else
+    {
+        system_status_packet.low_battery_warning = 0;
+        system_status_packet.battery_level = (uint8_t)((system_status_packet.battery_voltage / 12.6f) * 100);
+    }
+	//Serial_SendString("Data Update Successfully");
+}
+// 在pwm.c中的TIM2中断处理函数
+
+
+// 修改TIM2中断处理函数
+void TIM2_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
+    {
+        Key_Tick();
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+    }
+}

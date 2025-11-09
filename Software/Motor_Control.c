@@ -1,118 +1,130 @@
-#include "stm32f10x.h"                  // Device header
+#include "stm32f10x.h"
+#include "motor_control.h"
+#include "motor.h"
+#include "encoder.h"
 #include "Serial.h"
-#include "Motor.h"
-#include "string.h"
-#include "Encoder.h"
-#include "KEY.h"
+#include "motor_data.h"
 
-extern int8_t Motor_Mode;
-extern int32_t Set_Speed_1;
-extern int32_t Get_Speed_1;
-extern int32_t Set_Speed_2;
-extern int32_t Get_Speed_2;
-extern uint16_t Motor_Speed_Get_Count;
+// 定义全局变量
+Motor_Speed_Data motor_speed_data = {
+    .left_target_speed = 0,
+    .left_actual_speed = 0,
+    .right_target_speed = 0,
+    .right_actual_speed = 0,
+    .left_error = 0,
+    .left_previous_error = 0,
+    .left_integral = 0,
+    .right_error = 0,
+    .right_previous_error = 0,
+    .right_integral = 0,
+    .left_pid_output = 0,
+    .right_pid_output = 0
+};
 
-double kp = 0.3;
-double ki = 0.2;
-double kd = 0;
-double kp_ = 0.3;
-double ki_ = 0;
-double kd_ = 0;
-float Error0,Error1,Error2,ErrorInt;
-float Error0_,Error1_,Error2_,ErrorInt_;
-float Out;
+// PID参数
+PID_Parameters pid_parameters = {
+    .kp_left = 0.08f,
+    .ki_left = 0.08f,
+    .kd_left = 0.2f,
+    .kp_right = 0.08f,
+    .ki_right = 0.08f,
+    .kd_right = 0.2f,
+    .integral_limit = 100.0f,
+    .output_limit = 100.0f
+};
 
-int16_t Set_Position_1;
-int16_t Get_Position_1;
-int16_t Set_Position_2;
-int16_t Get_Position_2;
-
-void Serial_MotorSpeedControl(void)
+void MotorControl_Init(void)
 {
-    if (Serial_RxFlag == 1)
-    {
-        if (sscanf(Serial_RxPacket, "Speed_L%d", &Set_Speed_1) == 1);
-        else if (sscanf(Serial_RxPacket, "Position_L%hd", &Set_Position_1) == 1);
-        else if (sscanf(Serial_RxPacket, "Speed_R%d", &Set_Speed_2) == 1);
-        else if (sscanf(Serial_RxPacket, "Position_R%hd", &Set_Position_2) == 1);
-		Error0 = Error1 = Error2 = ErrorInt = Out = 0;
-        Serial_RxFlag = 0;
-    }
+    // 初始化电机速度数据
+    motor_speed_data.left_target_speed = 0;
+    motor_speed_data.right_target_speed = 0;
+    motor_speed_data.left_actual_speed = 0;
+    motor_speed_data.right_actual_speed = 0;
+    
+    // 初始化PID相关变量
+    motor_speed_data.left_error = 0;
+    motor_speed_data.left_previous_error = 0;
+    motor_speed_data.left_integral = 0;
+    motor_speed_data.left_pid_output = 0;
+    
+    motor_speed_data.right_error = 0;
+    motor_speed_data.right_previous_error = 0;
+    motor_speed_data.right_integral = 0;
+    motor_speed_data.right_pid_output = 0;
 }
 
-
-void TIM1_UP_IRQHandler(void)  // 修正中断函数名
+void MotorControl_Update(void)
 {
-    if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET)
-    {
-		Key_Tick();
-        static uint16_t Count;
-        Count++;
-        if (Count >= Motor_Speed_Get_Count)
-        {    
-            Count = 0;  // 清零计数器
+    // 获取编码器速度
+    motor_speed_data.left_actual_speed = (int16_t)Encoder_GetLeft()*1.4;
+    motor_speed_data.right_actual_speed = (int16_t)Encoder_GetRight()*1.4;
 
-			//PID Control
-			if (Motor_Mode==0)//Speed
-			{
-				Get_Speed_1 = Encoder_Get_1();
-				Get_Speed_2 = Encoder_Get_2();
-				
-				Error1 = Error0;
-				Error0 = Set_Speed_1 - Get_Speed_1;
-				
-				ErrorInt += Error0;
-				
-				Out = kp * Error0 + ki * ErrorInt +kd * (Error0-Error1);
-				if (Out >100) {Out=100;}
-				if (Out <-100) {Out=-100;}
-				
-				Motor_SetSpeed_1(Out);
-			}
-//			else if (Motor_Mode==1)//Speed
-//			{
-//				Get_Speed_1 = Encoder_Get_1();
-//				
-//				Error2 = Error1;
-//				Error1 = Error0;
-//				Error0 = Set_Speed_1 - Get_Speed_1;
-//				
-//				ErrorInt += Error0;
-//				
-//				Out += kp * (Error0 - Error1) + ki * Error0 + kd * (Error0 - 2 * Error1 + Error2);
-//				if (Out >100) {Out=100;}
-//				if (Out <-100) {Out=-100;}
-//				
-//				Motor_SetSpeed_1(Out);
-//			}
-			else // Position Sync Mode
-			{
-				Get_Position_1 += -Encoder_Get_1();   
-				Get_Position_2 += Encoder_Get_2();  
-				
-				Set_Position_2 = Get_Position_1;    // 同步目标 = 主电机位置
-
-				Error1_ = Error0_;
-				Error0_ = Set_Position_2 - Get_Position_2;
-				ErrorInt_ += Error0_;
-
-				Out = kp_ * Error0_ + ki_ * ErrorInt_ + kd_ * (Error0_ - Error1_);
-
-				if (ErrorInt > 1000)  ErrorInt_ = 1000;
-				if (ErrorInt < -1000) ErrorInt_ = -1000;
-				if (Out > 100)  Out = 100;
-				if (Out < -100) Out = -100;
-				Motor_SetSpeed_2(Out);
-			}
-        }
-		// 积分项限幅
-		if (ErrorInt > 1000)  ErrorInt = 1000;
-		if (ErrorInt < -1000) ErrorInt = -1000;
-
-		// 输出限幅
-		if (Out > 100)  Out = 100;
-		if (Out < -100) Out = -100;
-
-        TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
+    // 如果目标速度为0，停止电机并重置积分
+    if(motor_speed_data.left_target_speed == 0 && motor_speed_data.right_target_speed == 0) {
+        Motor_SetSpeed_Left(0);
+        Motor_SetSpeed_Right(0);
+        motor_speed_data.left_integral = 0;
+        motor_speed_data.right_integral = 0;
+        motor_speed_data.left_previous_error = 0;
+        motor_speed_data.right_previous_error = 0;
+        return;
     }
+
+    // 左电机PID计算 - 按照您提供的思路
+    motor_speed_data.left_previous_error = motor_speed_data.left_error;
+    motor_speed_data.left_error = motor_speed_data.left_target_speed - motor_speed_data.left_actual_speed;
+    
+    motor_speed_data.left_integral += motor_speed_data.left_error;
+    
+    // 积分限幅
+    if(motor_speed_data.left_integral > pid_parameters.integral_limit) 
+        motor_speed_data.left_integral = pid_parameters.integral_limit;
+    if(motor_speed_data.left_integral < -pid_parameters.integral_limit) 
+        motor_speed_data.left_integral = -pid_parameters.integral_limit;
+    
+    // PID计算
+    motor_speed_data.left_pid_output = pid_parameters.kp_left * motor_speed_data.left_error + 
+                                      pid_parameters.ki_left * motor_speed_data.left_integral + 
+                                      pid_parameters.kd_left * (motor_speed_data.left_error - motor_speed_data.left_previous_error);
+    
+    // 输出限幅
+    if (motor_speed_data.left_pid_output > pid_parameters.output_limit) 
+        motor_speed_data.left_pid_output = pid_parameters.output_limit;
+    if (motor_speed_data.left_pid_output < -pid_parameters.output_limit) 
+        motor_speed_data.left_pid_output = -pid_parameters.output_limit;
+
+    // 右电机PID计算 - 按照您提供的思路
+    motor_speed_data.right_previous_error = motor_speed_data.right_error;
+    motor_speed_data.right_error = motor_speed_data.right_target_speed - motor_speed_data.right_actual_speed;
+    
+    motor_speed_data.right_integral += motor_speed_data.right_error;
+    
+    // 积分限幅
+    if(motor_speed_data.right_integral > pid_parameters.integral_limit) 
+        motor_speed_data.right_integral = pid_parameters.integral_limit;
+    if(motor_speed_data.right_integral < -pid_parameters.integral_limit) 
+        motor_speed_data.right_integral = -pid_parameters.integral_limit;
+    
+    // PID计算
+    motor_speed_data.right_pid_output = pid_parameters.kp_right * motor_speed_data.right_error + 
+                                       pid_parameters.ki_right * motor_speed_data.right_integral + 
+                                       pid_parameters.kd_right * (motor_speed_data.right_error - motor_speed_data.right_previous_error);
+    
+    // 输出限幅
+    if (motor_speed_data.right_pid_output > pid_parameters.output_limit) 
+        motor_speed_data.right_pid_output = pid_parameters.output_limit;
+    if (motor_speed_data.right_pid_output < -pid_parameters.output_limit) 
+        motor_speed_data.right_pid_output = -pid_parameters.output_limit;
+    
+    // 设置电机速度
+    Motor_SetSpeed_Left((int8_t)motor_speed_data.left_pid_output);
+    Motor_SetSpeed_Right((int8_t)motor_speed_data.right_pid_output);
+}
+
+void MotorControl_ResetIntegral(void)
+{
+    motor_speed_data.left_integral = 0;
+    motor_speed_data.right_integral = 0;
+    motor_speed_data.left_previous_error = 0;
+    motor_speed_data.right_previous_error = 0;
 }

@@ -1,30 +1,54 @@
-#include "stm32f10x.h"                  // Device header
-#include "Delay.h"
-#include "OLED.h"
-#include "PWM.h"
-#include "KEY.h"
-#include "Timer.h"
+#include "stm32f10x.h"                  
 #include "Motor.h"
 #include "Serial.h"
-#include "Encoder.h"
-uint16_t Angle =50;
-int8_t Motor_Mode =0;//0,1为速度任务,不是0 or 1为位置任务
-int32_t Set_Speed_1 = 0;
-int32_t Get_Speed_1 = 0;
-int32_t Set_Speed_2 = 0;
-int32_t Get_Speed_2 = 0;
-uint16_t Motor_Speed_Get_Count=2;
+#include "Motor_Control.h"
+#include "KEY.h"
+#include "Delay.h"
+#include "Communication.h"
+#include "motor_data.h"
+#include "Encoder.h"  // 添加Encoder.h头文件
+#include "OLED.h"
 
-int main()
+// 编译时通信模式选择
+// #define USE_BLUETOOTH_MODE
+
+#ifdef USE_BLUETOOTH_MODE
+    #define COMMUNICATION_MODE_BLUETOOTH
+    #define COMMUNICATION_MODE_STRING "BLUETOOTH"
+#else
+    #define COMMUNICATION_MODE_CH340  
+    #define COMMUNICATION_MODE_STRING "CH340"
+#endif
+
+
+// 声明全局毫秒计数器
+extern volatile uint32_t millis_count;
+
+static uint16_t Count_Serial = 0;
+int main(void)
 {
+    SystemInit();
+    // 初始化所有模块
+    Serial_Init();
+    Motor_Init();
+    Encoder_Init();
+    MotorControl_Init();
+    KEY_Init();
+    Serial_Command_Init();
 	OLED_Init();
-	Motor_Init();
-	KEY_Init();
-	Timer_Init();
-	Serial_Init();
-	Encoder_Init();
-	while(1)
-	{
-		menu1();
-	}
+	OLED_ShowString(0,0,"Hello",OLED_8X16);
+	OLED_Update();
+    Serial_SendString("@=== Smart Car System Started ===\r\n");
+    while(1)
+    {
+        Serial_Command_Process();
+		MotorControl_Update();
+		Count_Serial++;
+
+		Serial_Printf("%d,%d,%d,%d\r\n",
+                motor_speed_data.left_target_speed,
+                motor_speed_data.right_target_speed,
+                motor_speed_data.left_actual_speed,
+                motor_speed_data.right_actual_speed);
+    }
 }
