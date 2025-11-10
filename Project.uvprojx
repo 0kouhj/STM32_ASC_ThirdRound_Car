@@ -653,6 +653,16 @@
           <GroupName>System</GroupName>
           <Files>
             <File>
+              <FileName>Timer.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\System\Timer.h</FilePath>
+            </File>
+            <File>
+              <FileName>Timer.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\System\Timer.c</FilePath>
+            </File>
+            <File>
               <FileName>Delay.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\System\Delay.c</FilePath>
@@ -726,6 +736,36 @@
               <FileName>PWM.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Hardware\PWM.h</FilePath>
+            </File>
+            <File>
+              <FileName>LED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\LED.c</FilePath>
+            </File>
+            <File>
+              <FileName>LED.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\LED.h</FilePath>
+            </File>
+            <File>
+              <FileName>Infrared_Sensor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\Infrared_Sensor.c</FilePath>
+            </File>
+            <File>
+              <FileName>Infrared_Sensor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\Infrared_Sensor.h</FilePath>
+            </File>
+            <File>
+              <FileName>BlueTooth.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\BlueTooth.c</FilePath>
+            </File>
+            <File>
+              <FileName>BlueTooth.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\BlueTooth.h</FilePath>
             </File>
           </Files>
         </Group>

@@ -101,10 +101,7 @@ static void Handle_System_Command(const char* command)
 		}
     }
     else if (strcmp(command, "@STOP") == 0) {
-		motor_speed_data.left_target_speed=0;
-		motor_speed_data.right_target_speed=0;
-		Motor_SetSpeed_Left(0);
-		Motor_SetSpeed_Right(0);
+		Emergency_Stop_Execute();
         Serial_SendString("@OK STOP\r\n");
     }
     else if (strcmp(command, "@RESET") == 0) {

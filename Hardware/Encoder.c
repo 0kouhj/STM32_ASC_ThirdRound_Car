@@ -2,6 +2,7 @@
 #include "stm32f10x.h"
 #include "encoder.h"
 #include "serial.h"
+#include "Sensor_Data.h"
 // 编码器计数值
 volatile int32_t LeftEncoder_Count = 0;
 volatile int32_t RightEncoder_Count = 0;
@@ -73,6 +74,7 @@ int16_t Encoder_GetLeft(void)
     int16_t Temp = -TIM_GetCounter(TIM1);
     TIM_SetCounter(TIM1, 0);
     LeftEncoder_Speed = Temp;
+	sensor_packet.left_encoder_raw = Temp;
 	return Temp;
 }
 
@@ -84,6 +86,7 @@ int16_t Encoder_GetRight(void)
     int16_t Temp = TIM_GetCounter(TIM4);
     TIM_SetCounter(TIM4, 0);
     RightEncoder_Speed = Temp;
+	sensor_packet.right_encoder_raw = Temp;
     return Temp;
 }
 

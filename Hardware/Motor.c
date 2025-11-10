@@ -36,9 +36,6 @@ void Motor_Init(void)
     /* 初始化PWM和编码器 */
     PWM_LeftMotor_Init();
     PWM_RightMotor_Init();
-    // Encoder_Init();  // 暂时注释掉编码器
-    
-    Serial_SendString("@Motor Initialized: AIN1=PB12, AIN2=PB13, BIN1=PB14, BIN2=PB15\r\n");
 }
 
 /**

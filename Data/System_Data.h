@@ -51,6 +51,9 @@ typedef struct {
 
 // 声明全局变量（在头文件中使用extern）
 extern System_Status_Packet system_status_packet;
-	
 void Data_Update(void);
+//紧急停止函数
+void Emergency_Stop_Execute(void);
+void Emergency_Stop_Recover(void);
+uint8_t Is_Emergency_Stop_Active(void);
 #endif

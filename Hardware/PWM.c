@@ -6,9 +6,7 @@
 #include "Sensor_Data.h"
 #include "Encoder.h"
 #include "KEY.h"
-// 在PWM.c文件开头添加外部声明
-extern volatile uint32_t millis_count;
-
+#include "Timer.h"
 
 char Motor_Str[64];
 /**
@@ -120,30 +118,13 @@ void PWM_SetRightMotorCompare(uint16_t Compare)
     if (Compare > 1000) Compare = 1000;
     TIM_SetCompare1(TIM3, Compare);
 }
-void Data_Update(void)
-{
-    // 更新电池状态（修正判断逻辑）
-    if (system_status_packet.battery_voltage < 10.0f)  // 修正：通常低电量在7V左右
-    {
-        system_status_packet.low_battery_warning = 1;
-        system_status_packet.battery_level = (uint8_t)((system_status_packet.battery_voltage / 12.6f) * 100);
-    }
-    else
-    {
-        system_status_packet.low_battery_warning = 0;
-        system_status_packet.battery_level = (uint8_t)((system_status_packet.battery_voltage / 12.6f) * 100);
-    }
-	//Serial_SendString("Data Update Successfully");
-}
-// 在pwm.c中的TIM2中断处理函数
 
 
-// 修改TIM2中断处理函数
 void TIM2_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM2, TIM_IT_Update) != RESET)
     {
-        Key_Tick();
+		Timer_Update();
         TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
     }
 }
