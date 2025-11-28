@@ -22,7 +22,7 @@ static uint8_t in_realtime_mode = 0;  // 是否处于实时显示模式
 
 // 当前显示的菜单
 static Menu *current_menu = NULL;
-static uint8_t need_refresh = 1;  // 需要刷新显示标志
+uint8_t need_refresh = 1;  // 需要刷新显示标志
 
 // 警告模式状态
 static uint8_t warning_mode = 0;  // 是否处于警告模式
@@ -31,7 +31,6 @@ static uint32_t warning_start_time = 0;  // 警告开始时间
 // 显示配置
 #define DISPLAY_LINES 6           // 显示总行数
 #define MENU_ITEMS_PER_PAGE 5     // 每页显示的菜单项数量
-#define WARNING_DISPLAY_TIME 3000 // 警告显示时间（ms）
 
 //辅助函数
 static void IntToStr(uint16_t num, char *str)
@@ -62,7 +61,7 @@ void Menu_DisplayRealtimeParams(void)
     OLED_Clear();
     
     // 显示标题
-    OLED_ShowString(0, 0, "Real-Time Data", OLED_8X16);
+    OLED_ShowString(0, 0, "Debug", OLED_8X16);
     
     // 显示电池信息
     Menu_DisplayBatteryInfo();
@@ -75,7 +74,6 @@ void Menu_DisplayRealtimeParams(void)
     // 提前声明所有局部变量
     char bat_str[16];
     char ir_str[4];
-    char enc_str[8];
     char pid_str[8];
     char page_str[4];
     uint16_t volt_int, volt_frac;
@@ -88,36 +86,32 @@ void Menu_DisplayRealtimeParams(void)
             OLED_ShowString(0, line*8, "Bat:", OLED_6X8);
             IntToStr(system_status_packet.battery_level, bat_str);
             OLED_ShowString(24, line*8, bat_str, OLED_6X8);
-            OLED_ShowString(30, line*8, "% (", OLED_6X8);
+            OLED_ShowString(42, line*8, "%(", OLED_6X8);
             // 显示电压（整数部分.小数部分）
             volt_int = (uint16_t)system_status_packet.battery_voltage;
             volt_frac = (uint16_t)((system_status_packet.battery_voltage - volt_int) * 100);
             IntToStr(volt_int, bat_str);
-            OLED_ShowString(48, line*8, bat_str, OLED_6X8);
-            OLED_ShowString(60, line*8, ".", OLED_6X8);
+            OLED_ShowString(54, line*8, bat_str, OLED_6X8);
+            OLED_ShowString(66, line*8, ".", OLED_6X8);
             IntToStr(volt_frac, bat_str);
-            OLED_ShowString(66, line*8, bat_str, OLED_6X8);
-            OLED_ShowString(72, line*8, "V)", OLED_6X8);
+            OLED_ShowString(72, line*8, bat_str, OLED_6X8);
+            OLED_ShowString(78, line*8, "V)", OLED_6X8);
             line++;
             // 左电机目标速度
             OLED_ShowString(0, line*8, "L-Target:", OLED_6X8);
-            IntToStr(motor_speed_data.left_target_speed, bat_str);
-            OLED_ShowString(54, line*8, bat_str, OLED_6X8);
+            OLED_ShowSignedNum(54, line*8,motor_speed_data.left_target_speed,3,OLED_6X8);
             line++;
             // 左电机实际速度
             OLED_ShowString(0, line*8, "L-Actual:", OLED_6X8);
-            IntToStr(motor_speed_data.left_actual_speed, bat_str);
-            OLED_ShowString(54, line*8, bat_str, OLED_6X8);
+            OLED_ShowSignedNum(54, line*8,motor_speed_data.left_actual_speed,3,OLED_6X8);
             line++;
             // 右电机目标速度
             OLED_ShowString(0, line*8, "R-Target:", OLED_6X8);
-            IntToStr(motor_speed_data.right_target_speed, bat_str);
-            OLED_ShowString(54, line*8, bat_str, OLED_6X8);
+            OLED_ShowSignedNum(54, line*8,motor_speed_data.right_target_speed,3,OLED_6X8);
             line++;
             // 右电机实际速度
-            OLED_ShowString(0, line*8, "R-Actual:", OLED_6X8);
-            IntToStr(motor_speed_data.right_actual_speed, bat_str);
-            OLED_ShowString(54, line*8, bat_str, OLED_6X8);
+            OLED_ShowString(0, line*8, "R-Target:", OLED_6X8);
+            OLED_ShowSignedNum(54, line*8,motor_speed_data.right_actual_speed,3,OLED_6X8);
             line++;
             // 系统控制模式
             OLED_ShowString(0, line*8, "Mode:", OLED_6X8);
@@ -134,45 +128,44 @@ void Menu_DisplayRealtimeParams(void)
         case 1:  // 第2页：传感器数据
         {
             // 红外传感器
-            OLED_ShowString(0, line*8, "IR:", OLED_6X8);
+            OLED_ShowString(0, line*8, "o", OLED_6X8);
             for(int i = 0; i < 4; i++) {
                 IntToStr(sensor_packet.ir_sensor_raw[i], ir_str);
                 OLED_ShowString(18 + i*24, line*8, ir_str, OLED_6X8);
-                if(i < 3) OLED_ShowString(30 + i*24, line*8, ",", OLED_6X8);
+				if(i==1) OLED_ShowString(30,line*8,"L",OLED_6X8);
+				if(i==2) OLED_ShowString(54,line*8,"R",OLED_6X8);
+				if(i==3) OLED_ShowString(78,line*8,"V",OLED_6X8);
+				
             }
             line++;
-            
-            // 左编码器
-            OLED_ShowString(0, line*8, "L-Encoder:", OLED_6X8);
-            IntToStr(sensor_packet.left_encoder_raw, enc_str);
-            OLED_ShowString(60, line*8, enc_str, OLED_6X8);
-            line++;
-            
-            // 右编码器
-            OLED_ShowString(0, line*8, "R-Encoder:", OLED_6X8);
-            IntToStr(sensor_packet.right_encoder_raw, enc_str);
-            OLED_ShowString(60, line*8, enc_str, OLED_6X8);
-            line++;
-            
+
             // 转向状态
             OLED_ShowString(0, line*8, "Steer:", OLED_6X8);
-            switch(system_status_packet.steering_state) {
-                case STEERING_STRAIGHT: OLED_ShowString(36, line*8, "Straight", OLED_6X8); break;
-                case STEERING_LEFT: OLED_ShowString(36, line*8, "Left", OLED_6X8); break;
-                case STEERING_RIGHT: OLED_ShowString(36, line*8, "Right", OLED_6X8); break;
-                case STEERING_SHARP_LEFT: OLED_ShowString(36, line*8, "S-Left", OLED_6X8); break;
-                case STEERING_SHARP_RIGHT: OLED_ShowString(36, line*8, "S-Right", OLED_6X8); break;
-                default: OLED_ShowString(36, line*8, "Unknown", OLED_6X8); break;
-            }
+			if (system_status_packet.system_control_mode == 1)
+			{
+				switch(system_status_packet.steering_state) {
+					case 0: OLED_ShowString(36, line*8, "Straight", OLED_6X8); break;
+					case 1: OLED_ShowString(36, line*8, "Left", OLED_6X8); break;
+					case 2: OLED_ShowString(36, line*8, "Right", OLED_6X8); break;
+					case 3: OLED_ShowString(36, line*8, "S-Left", OLED_6X8); break;
+					case 4: OLED_ShowString(36, line*8, "S-Right", OLED_6X8); break;
+					default: OLED_ShowString(36, line*8, "Unknown", OLED_6X8); break;
+				}
+			}
+			else OLED_ShowString(36,line*8,"Not Track",OLED_6X8);
             line++;
             
             // 路线状态
             OLED_ShowString(0, line*8, "Line:", OLED_6X8);
-            if(system_status_packet.line_lost) {
-                OLED_ShowString(30, line*8, "Lost", OLED_6X8);
-            } else {
-                OLED_ShowString(30, line*8, "On Track", OLED_6X8);
-            }
+			if (system_status_packet.system_control_mode == 1)
+			{
+				if(system_status_packet.line_lost) {
+					OLED_ShowString(30, line*8, "Lost", OLED_6X8);
+				} else {
+					OLED_ShowString(30, line*8, "On Track", OLED_6X8);
+				}
+			}
+			else OLED_ShowString(30,line*8,"Not Track",OLED_6X8);
             line++;
             
             // 蓝牙状态
@@ -222,6 +215,59 @@ void Menu_DisplayRealtimeParams(void)
             line++;
             break;
         }
+		case 3:  // 第4页：摇杆数据
+		{
+			// 摇杆X值
+			OLED_ShowString(0, line*8, "Joy X:", OLED_6X8);
+			OLED_ShowSignedNum(36, line*8, sensor_packet.joystick.x, 4, OLED_6X8);
+			line++;
+			
+			// 摇杆Y值
+			OLED_ShowString(0, line*8, "Joy Y:", OLED_6X8);
+			OLED_ShowSignedNum(36, line*8, sensor_packet.joystick.y, 4, OLED_6X8);
+			line++;
+			
+			// 灵敏度
+			OLED_ShowString(0, line*8, "Sensitivity:", OLED_6X8);
+			OLED_ShowFloatNum(78,line*8,joystick_data.sensitivity,1,1,OLED_6X8);
+			line++;
+			
+			// 左轮计算速度
+			OLED_ShowString(0, line*8, "L-Cal:", OLED_6X8);
+			int left_cal = sensor_packet.joystick.y + sensor_packet.joystick.x;
+			left_cal = (int)(left_cal * sensor_packet.joystick.sensitivity);
+			left_cal = left_cal > 90 ? 90 : (left_cal < -90 ? -90 : left_cal);
+			OLED_ShowSignedNum(36, line*8, left_cal, 4, OLED_6X8);
+			line++;
+			
+			// 右轮计算速度
+			OLED_ShowString(0, line*8, "R-Cal:", OLED_6X8);
+			int right_cal = sensor_packet.joystick.y - sensor_packet.joystick.x;
+			right_cal = (int)(right_cal * sensor_packet.joystick.sensitivity);
+			right_cal = right_cal > 90 ? 90 : (right_cal < -90 ? -90 : right_cal);
+			OLED_ShowSignedNum(36, line*8, right_cal, 4, OLED_6X8);
+			line++;
+			
+			// 摇杆状态指示
+			OLED_ShowString(0, line*8, "Status:", OLED_6X8);
+			if (sensor_packet.joystick.x == 0 && sensor_packet.joystick.y == 0) {
+				OLED_ShowString(42, line*8, "Center", OLED_6X8);
+			} else if (abs(sensor_packet.joystick.x) > abs(sensor_packet.joystick.y)) {
+				if (sensor_packet.joystick.x > 0) {
+					OLED_ShowString(42, line*8, "Right", OLED_6X8);
+				} else {
+					OLED_ShowString(42, line*8, "Left", OLED_6X8);
+				}
+			} else {
+				if (sensor_packet.joystick.y > 0) {
+					OLED_ShowString(42, line*8, "Forward", OLED_6X8);
+				} else {
+					OLED_ShowString(42, line*8, "Backward", OLED_6X8);
+				}
+			}
+			line++;
+			break;
+		}
     }
     
     // 显示页码指示器
@@ -242,16 +288,26 @@ void Test_Motor(void)
 	Motor_SetSpeed_Left(0);
 	Motor_SetSpeed_Right(0);
 }
-void Show_Debug_Menu(void)
+//Track_Mode
+void Track_Mode(void)
 {
-	for (uint8_t x =0;x<4;x++)
-	{
-		OLED_ShowString(0,32+x*8,"Serial",OLED_6X8);
-		OLED_ShowNum(0,32+x*8,x+1,1,OLED_6X8);
-		OLED_ShowNum(48,32+x*8,sensor_packet.ir_sensor_raw[x],1,OLED_6X8);
-	}
+	system_status_packet.system_control_mode = MODE_AUTO;
 }
-
+//Mode
+void Sys_Mode(void)
+{
+	if (system_status_packet.system_control_mode == 2)	
+		system_status_packet.system_control_mode = MODE_MANUAL;
+	else if (system_status_packet.system_control_mode == 1)	
+		system_status_packet.system_control_mode = MODE_BLUETOOTH;
+	else if (system_status_packet.system_control_mode == 0)	
+		system_status_packet.system_control_mode = MODE_AUTO;
+}
+//RESET_Action
+void RESET_Action(void)
+{
+	system_status_packet.system_control_mode = MODE_MANUAL;
+}
 // 菜单初始化
 void Menu_Init(void)
 {
@@ -261,8 +317,8 @@ void Menu_Init(void)
     
     // 主菜单
     Menu_AddItem(main_menu, "Emergency Stop", MENU_ITEM_ACTION, NULL, Emergency_Stop_Execute);
-    Menu_AddItem(main_menu, "Start Track", MENU_ITEM_SUBMENU, NULL, NULL);
-    Menu_AddItem(main_menu, "Strat B_Control", MENU_ITEM_SUBMENU, NULL, NULL);
+    Menu_AddItem(main_menu, "Start Track", MENU_ITEM_ACTION, NULL, Track_Mode);
+    Menu_AddItem(main_menu, "SysMode Change", MENU_ITEM_ACTION, NULL, Sys_Mode);
     Menu_AddItem(main_menu, "DEBUG", MENU_ITEM_REALTIME_PARAMS, NULL, NULL);
     Menu_AddItem(main_menu, "Test", MENU_ITEM_SUBMENU, test_menu, NULL);
     Menu_AddItem(main_menu, "RESET", MENU_ITEM_ACTION, NULL, NULL);
@@ -275,7 +331,7 @@ void Menu_Init(void)
     
     // 初始化实时显示状态
     realtime_state.current_page = 0;
-    realtime_state.total_pages = 3;
+    realtime_state.total_pages = 4;
     realtime_state.last_refresh = 0;
     in_realtime_mode = 0;
 }
@@ -439,7 +495,7 @@ void Menu_Process(void)
             case MENU_ITEM_REALTIME_PARAMS:
                 in_realtime_mode = 1;
                 realtime_state.current_page = 0;
-                realtime_state.total_pages = 3;
+                realtime_state.total_pages = 4;
                 realtime_state.last_refresh = Timer_GetSystemMillis();
                 need_refresh = 1;
                 break;
@@ -463,7 +519,7 @@ void Menu_Process(void)
     }
 }
 
-// 显示电池信息在右上角
+// 显示电池信息和系统控制模式在右上角
 void Menu_DisplayBatteryInfo(void)
 {
 	if (system_status_packet.battery_level <=20) OLED_ShowImage(100,0,30,16,VeryLow);
@@ -471,6 +527,9 @@ void Menu_DisplayBatteryInfo(void)
 	else if (system_status_packet.battery_level <=60) OLED_ShowImage(100,0,30,16,Mediem);
 	else if (system_status_packet.battery_level <=80) OLED_ShowImage(100,0,30,16,High);
 	else OLED_ShowImage(100,0,30,16,VeryHigh);
+	if (system_status_packet.system_control_mode == 0)	OLED_ShowChar(88,0,'M',OLED_8X16);
+	else if (system_status_packet.system_control_mode == 1)	OLED_ShowChar(88,0,'T',OLED_8X16);
+	else OLED_ShowChar(88,0,'B',OLED_8X16);
 }
 
 // 刷新显示

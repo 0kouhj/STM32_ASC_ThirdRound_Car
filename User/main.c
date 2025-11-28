@@ -13,6 +13,8 @@
 
 #include "Motor_Control.h"
 #include "Communication.h"
+#include "Track.h"
+#include "Joystick.h"
 
 #include "OLED.h"
 #include "Menu.h"
@@ -38,6 +40,7 @@ Timer_t motor_update_timer;
 Timer_t system_status_timer;
 Timer_t sensor_update_timer;
 Timer_t led_blink_timer;
+Timer_t debug_timer;
 
 int main(void)
 {
@@ -56,6 +59,7 @@ int main(void)
 	
     MotorControl_Init();
     Serial_Command_Init();
+    TrackingStateMachine_Init();
 
 	Menu_Init();
     //发送启动信息
@@ -68,7 +72,7 @@ int main(void)
     Timer_Start(&system_status_timer);
     Timer_Start(&sensor_update_timer);
 	Timer_Start(&led_blink_timer);
-	
+	Timer_Start(&debug_timer);
     // 显示启动信息
 	OLED_ShowString(0,0, "---------------------", OLED_6X8);
 	OLED_ShowString(0,24, "---------------------", OLED_6X8);
@@ -76,17 +80,16 @@ int main(void)
 	OLED_ShowImage(0,32,128,32,BiaoQingBao);
     OLED_ShowString(24,24, COMMUNICATION_MODE_STRING,OLED_6X8);
     OLED_Update();
-	
 	Delay_s(2);
 	
     while(1)
     {
         // 高频任务：每循环都执行
-        Serial_Command_Process();
-        
-        // 中频任务：20ms传感器更新
+		if (system_status_packet.system_control_mode == 0)	Serial_Command_Process();
+        // 中频任务：20ms传感器,路径状态机更新
         if (Timer_IsTimeout(&sensor_update_timer, 20)) {
             Data_Update();
+			if (system_status_packet.system_control_mode == 1)	 TrackingStateMachine_Update();
             Timer_Start(&sensor_update_timer);
         }
         
@@ -96,8 +99,6 @@ int main(void)
 			Key_Tick();
             if (system_status_packet.low_battery_warning == 0 && system_status_packet.emergency_stop == 0)
 			{
-				// Track_Following_Algorithm();
-				
 				// 电机控制
 				MotorControl_Update();
 				Timer_Start(&motor_update_timer);
@@ -124,5 +125,9 @@ int main(void)
 			else	LED_On();
             Timer_Start(&led_blink_timer);
         }
+//		//Debug
+//		if (Timer_IsTimeout(&debug_timer, 10)){
+//			Serial_Printf("%d,%d\r\n",motor_speed_data.left_actual_speed,motor_speed_data.right_actual_speed);
+//		}
     }
 }

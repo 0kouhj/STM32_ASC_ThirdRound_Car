@@ -81,15 +81,15 @@ void Motor_SetSpeed_Right(int8_t Speed)
     if (Speed > 0)
     {
         // 正转：BIN1=1, BIN2=0
-        GPIO_SetBits(GPIOB, GPIO_Pin_14);   // BIN1 = 1
-        GPIO_ResetBits(GPIOB, GPIO_Pin_15); // BIN2 = 0
+        GPIO_SetBits(GPIOB, GPIO_Pin_15);   // BIN1 = 1
+        GPIO_ResetBits(GPIOB, GPIO_Pin_14); // BIN2 = 0
         PWM_SetRightMotorCompare(Speed * 10);
     }
     else if (Speed < 0)
     {
         // 反转：BIN1=0, BIN2=1
-        GPIO_ResetBits(GPIOB, GPIO_Pin_14); // BIN1 = 0
-        GPIO_SetBits(GPIOB, GPIO_Pin_15);   // BIN2 = 1
+        GPIO_ResetBits(GPIOB, GPIO_Pin_15); // BIN1 = 0
+        GPIO_SetBits(GPIOB, GPIO_Pin_14);   // BIN2 = 1
         PWM_SetRightMotorCompare(-Speed * 10);
     }
     else

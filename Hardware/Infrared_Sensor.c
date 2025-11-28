@@ -46,9 +46,9 @@ void Infrared_Update_SensorsState(void)
 {
     for (uint8_t i = 0; i < INFRARED_SENSOR_COUNT; i++) {
         if (GPIO_ReadInputDataBit(sensor_gpio[i].GPIOx, sensor_gpio[i].GPIO_Pin) == Bit_RESET) {
-            sensor_packet.ir_sensor_raw[i] = 0;  // 检测到黑线
+            sensor_packet.ir_sensor_raw[i] = 1;  // 检测到黑线
         } else {
-            sensor_packet.ir_sensor_raw[i] = 1;  // 检测到白线
+            sensor_packet.ir_sensor_raw[i] = 0;  // 检测到白线
         }                      
     }
 }

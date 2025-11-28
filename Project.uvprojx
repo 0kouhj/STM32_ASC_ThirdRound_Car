@@ -683,14 +683,14 @@
               <FilePath>.\Hardware\Encoder.c</FilePath>
             </File>
             <File>
-              <FileName>Encoder.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\Hardware\Encoder.h</FilePath>
-            </File>
-            <File>
               <FileName>KEY.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\Hardware\KEY.c</FilePath>
+            </File>
+            <File>
+              <FileName>Encoder.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\Encoder.h</FilePath>
             </File>
             <File>
               <FileName>KEY.h</FileName>
@@ -811,6 +811,16 @@
               <FileName>Communication.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Software\Communication.h</FilePath>
+            </File>
+            <File>
+              <FileName>Track.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Software\Track.c</FilePath>
+            </File>
+            <File>
+              <FileName>Track.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Software\Track.h</FilePath>
             </File>
           </Files>
         </Group>

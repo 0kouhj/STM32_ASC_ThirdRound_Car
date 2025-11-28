@@ -9,7 +9,8 @@
 #include "OLED.h"
 #include "LED.h"
 #include "PWM.h"
-
+#include "BlueTooth.h"
+extern uint8_t need_refresh;
 // 定义全局变量
 System_Status_Packet system_status_packet = {
     .steering_state = STEERING_STRAIGHT,
@@ -25,6 +26,14 @@ System_Status_Packet system_status_packet = {
 
 void Data_Update(void)
 {
+	if (Bluetooth_GetHardwareState())
+	{
+		system_status_packet.bluetooth_connected = 1;
+	}
+	else
+	{
+		system_status_packet.bluetooth_connected = 0;
+	}
 	if (system_status_packet.emergency_stop)
 	{
 		Emergency_Stop_Execute();
@@ -42,9 +51,6 @@ void Data_Update(void)
         system_status_packet.battery_level = (uint8_t)((system_status_packet.battery_voltage / 12.6f) * 100);
     }
 }
-
-
-
 
 /**
   * @brief  紧急停止函数 - 停止所有电机并进入省电模式

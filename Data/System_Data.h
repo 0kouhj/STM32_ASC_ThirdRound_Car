@@ -8,11 +8,6 @@ typedef enum {
     SERIAL_CH340 = 1
 } Serial_Mode;
 
-typedef enum {
-    BATTERY_HIGH = 0,
-    BATTERY_LOW = 1
-} Battery_Mode;
-
 /*------------------------------------------------------------*/
 // 转向状态
 typedef enum {
@@ -22,6 +17,35 @@ typedef enum {
     STEERING_SHARP_LEFT,   // 急左转
     STEERING_SHARP_RIGHT   // 急右转
 } Steering_State;
+//路口状态
+typedef enum {
+    // 基础循迹状态
+    TRACKING_STRAIGHT      = 0,    // 直行状态
+    
+    // 细分转向状态
+    TRACKING_LEFT_SLIGHT   = 1,    // 轻微左转
+    TRACKING_RIGHT_SLIGHT  = 2,    // 轻微右转
+    TRACKING_LEFT_MODERATE = 3,    // 中等左转 - 新增
+    TRACKING_RIGHT_MODERATE= 4,    // 中等右转 - 新增
+    TRACKING_LEFT_SHARP    = 5,    // 急左转
+    TRACKING_RIGHT_SHARP   = 6,    // 急右转
+    TRACKING_LEFT_EXTREME  = 7,    // 极端左转 - 新增
+    TRACKING_RIGHT_EXTREME = 8,    // 极端右转 - 新增
+    
+    // 特殊元素识别状态
+    TRACKING_CROSS_START   = 10,
+    TRACKING_CROSS_INSIDE  = 11,
+    TRACKING_CROSS_END     = 12,
+    
+    // 异常和恢复状态
+    TRACKING_LOST          = 20,
+    TRACKING_RECOVERING    = 21,
+    TRACKING_ALL_BLACK     = 22,
+    
+    // 调试和准备状态
+    TRACKING_READY         = 30,
+    TRACKING_FINISH        = 31
+} TrackingState_t;
 
 typedef enum {
     MODE_MANUAL = 0,       // 手动控制模式
@@ -34,7 +58,8 @@ typedef struct {
     // 运动状态
     Steering_State steering_state;    // 转向状态
     uint8_t line_lost;               // 是否丢失路线 (0/1)
-    // 运行状态
+    TrackingState_t trackingstate_t;
+	// 运行状态
     System_Control_Mode system_control_mode;
     // 电源状态
     uint8_t battery_level;           // 电池电量百分比 (0-100%)

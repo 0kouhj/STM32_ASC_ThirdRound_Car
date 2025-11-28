@@ -56,8 +56,8 @@ void MotorControl_Init(void)
 void MotorControl_Update(void)
 {
     // 获取编码器速度
-    motor_speed_data.left_actual_speed = (int16_t)Encoder_GetLeft()*1.4;
-    motor_speed_data.right_actual_speed = (int16_t)Encoder_GetRight()*1.4;
+    motor_speed_data.left_actual_speed = -(int16_t)Encoder_GetLeft()*1.4;
+    motor_speed_data.right_actual_speed = -(int16_t)Encoder_GetRight()*1.4;
 
     // 如果目标速度为0，停止电机并重置积分
     if(motor_speed_data.left_target_speed == 0 && motor_speed_data.right_target_speed == 0) {
@@ -82,7 +82,7 @@ void MotorControl_Update(void)
     if(motor_speed_data.left_integral < -pid_parameters.integral_limit) 
         motor_speed_data.left_integral = -pid_parameters.integral_limit;
     
-    // PID计算
+    // 左电机PID计算
     motor_speed_data.left_pid_output = pid_parameters.kp_left * motor_speed_data.left_error + 
                                       pid_parameters.ki_left * motor_speed_data.left_integral + 
                                       pid_parameters.kd_left * (motor_speed_data.left_error - motor_speed_data.left_previous_error);
@@ -93,7 +93,7 @@ void MotorControl_Update(void)
     if (motor_speed_data.left_pid_output < -pid_parameters.output_limit) 
         motor_speed_data.left_pid_output = -pid_parameters.output_limit;
 
-    // 右电机PID计算 - 按照您提供的思路
+    // 右电机PID计算
     motor_speed_data.right_previous_error = motor_speed_data.right_error;
     motor_speed_data.right_error = motor_speed_data.right_target_speed - motor_speed_data.right_actual_speed;
     
